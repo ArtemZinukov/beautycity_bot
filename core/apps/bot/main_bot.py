@@ -1,4 +1,5 @@
 from telebot import TeleBot
+from telebot import types
 from telebot.types import ReplyKeyboardMarkup
 from environs import Env
 
@@ -20,9 +21,16 @@ def send_welcome(message):
 '''
     bot.send_message(message.chat.id, start_message, reply_markup=markup)
 
+def choose_salon(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.row('Салон_1', 'Салон_2', 'Салон_3')
+    bot.send_message(message.chat.id, 'Выберите салон:', reply_markup=markup)
+
 
 def main():
     bot.infinity_polling()
+
+
 
 
 if __name__ == "__main__":
