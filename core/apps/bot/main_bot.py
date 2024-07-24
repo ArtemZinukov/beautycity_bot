@@ -60,6 +60,7 @@ def send_back(message):
 #     if previous_message == "Правила пользования":
 #         handle_rules_message(message)
 
+@bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
 def choose_salon(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     markup.row('Салон_1', 'Салон_2', 'Салон_3')
