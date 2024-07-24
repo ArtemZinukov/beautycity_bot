@@ -53,6 +53,13 @@ def send_back(message):
     handle_consent(message)
 
 
+# @bot.message_handler(func=lambda message: message.text == 'Назад')
+# def back_to_previous_message(message):
+#     previous_message = previous_messages.get(message.chat.id)
+#     if previous_message == "Правила пользования":
+#         handle_rules_message(message)
+
+
 def main():
     bot.infinity_polling()
 
