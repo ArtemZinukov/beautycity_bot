@@ -1,8 +1,9 @@
 from telebot import TeleBot
-from telebot import types
 from telebot.types import ReplyKeyboardMarkup
 from environs import Env
 import os
+from core.apps.bot.models import Salon
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.apps.settings')
 
 
 env = Env()
@@ -49,6 +50,20 @@ def handle_contact_admin(message):
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
+@bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
+def choose_salon(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    salons = Salon.objects.all()
+    for salon in salons:
+        markup.row(salon.name)
+    bot.send_message(message.chat.id, 'Выберите салон:', reply_markup=markup)
+
+
+# @bot.message_handler(func=lambda message: message.text == 'Салон_1')
+# def choose_procedure(message):
+#     markup = ReplyKeyboardMarkup(resize_keyboard=True)
+#     procedures =
+
 @bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
 def send_back(message):
     handle_consent(message)
@@ -60,11 +75,7 @@ def send_back(message):
 #     if previous_message == "Правила пользования":
 #         handle_rules_message(message)
 
-@bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
-def choose_salon(message):
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.row('Салон_1', 'Салон_2', 'Салон_3')
-    bot.send_message(message.chat.id, 'Выберите салон:', reply_markup=markup)
+
 
 
 def main():
