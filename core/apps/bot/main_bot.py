@@ -65,11 +65,13 @@ def choose_service(message):
     master = Master.objects.get(name=master_name)
     services = master.services.all()
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    message_text = "Выберите услугу:\n"
     for service in services:
+        message_text += f"{service.title} - {service.price} рублей\n"
         markup.add(service.title)
     markup.row('Назад', 'Вернуться на главную')
     previous_messages[message.chat.id] = 'Выбрать мастера'
-    bot.send_message(message.chat.id, 'Выберите услугу:', reply_markup=markup)
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
 @bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
