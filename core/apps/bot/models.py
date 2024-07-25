@@ -1,29 +1,64 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Client(models.Model):
-    username = models.CharField(max_length=50)
+    username = models.CharField(max_length=50, verbose_name='Имя клиента')
+
+    def __str__(self):
+        return self.username
+
+    class Meta:
+        verbose_name = "Клиент"
+        verbose_name_plural = "Клиенты"
 
 
 class Service(models.Model):
-    title = models.CharField(max_length=100)
-    price = models.DecimalField(max_digits=2, decimal_places=2)
+    title = models.CharField(max_length=100, verbose_name='Название процедуры')
+    price = models.DecimalField(max_digits=6, decimal_places=2, verbose_name='Цена')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "Процедура"
+        verbose_name_plural = "Процедуры"
 
 
 class Master(models.Model):
-    name = models.CharField(max_length=50)
-    service = models.ForeignKey(Service, verbose_name='Услуга', on_delete=models.CASCADE)
+    name = models.CharField(max_length=50, verbose_name='Имя мастера')
+    services = models.ManyToManyField(Service, verbose_name='Услуга')
+    salons = models.ManyToManyField("Salon", verbose_name='Салон')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Мастер"
+        verbose_name_plural = "Мастера"
 
 
 class Salon(models.Model):
-    adress = models.CharField(max_length=100)
-    master = models.ForeignKey(Master, verbose_name='Мастер', on_delete=models.CASCADE)
+    address = models.CharField(max_length=100, verbose_name='Адрес салона')
+
+    def __str__(self):
+        return self.address
+
+    class Meta:
+        verbose_name = "Салон"
+        verbose_name_plural = "Салоны"
 
 
 class Registration(models.Model):
-    salon = models.ForeignKey(Salon, verbose_name='Услуга', on_delete=models.CASCADE)
+    salon = models.ForeignKey(Salon, verbose_name='Салон', on_delete=models.CASCADE)
     master = models.ForeignKey(Master, verbose_name='Мастер', on_delete=models.CASCADE)
     client = models.ForeignKey(Client, verbose_name='Клиент', on_delete=models.CASCADE)
     service = models.ForeignKey(Service, verbose_name='Услуга', on_delete=models.CASCADE)
-    time_registration = models.DateTimeField(auto_now=False, auto_now_add=False)
-    
+    time_registration = models.DateTimeField(auto_now_add=False, verbose_name='Время регистрации')
+
+    def __str__(self):
+        return f"Заказ №{self.pk}"
+
+    class Meta:
+        verbose_name = "Забронированный заказ"
+        verbose_name_plural = "Забронированные заказы"

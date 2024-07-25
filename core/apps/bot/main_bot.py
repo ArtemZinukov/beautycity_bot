@@ -37,14 +37,23 @@ def handle_consent(message):
     markup.row('Выбрать мастера')
     markup.row('Связь с салоном')
     bot.send_message(message.chat.id, "Выберите действие:", reply_markup=markup)
-    previous_messages[message.chat.id] = "Выберите действие:"
 
 
 @bot.message_handler(func=lambda message: message.text == 'Связь с салоном')
 def handle_contact_admin(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     markup.row('Вернуться на главную')
-    message_text = 'Телефон администратора для связи: 79999999999'
+    message_text = 'Телефон администратора для связи: +79999999999'
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
+def handle_contact_admin(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.row('Ольга', 'Людмила', 'Светлана')
+    markup.row('Ксения', 'Галина', 'Екатерина')
+    markup.row('Вернуться на главную')
+    message_text = 'Выберите мастера'
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
