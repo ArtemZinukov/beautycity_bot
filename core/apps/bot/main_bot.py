@@ -2,7 +2,7 @@ from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup
 from environs import Env
 import os
-from .models import Master
+from .models import Master, Salon, Service
 
 
 env = Env()
@@ -84,6 +84,31 @@ def back_to_previous_message(message):
     previous_message = previous_messages.get(message.chat.id)
     if previous_message == "Выбрать мастера":
         handle_contact_admin(message)
+
+
+@bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
+def choose_salon(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    for salon in Salon.objects.all():
+        markup.row(salon.address)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите салон:"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text in [salon.address for salon in Salon.objects.all()])
+def choose_procedure(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    services = Service.objects.all()
+    for service in services:
+        markup.row(service.title)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите услугу:\n"
+    for service in services:
+        message_text += f"{service.title} - {service.price} рублей\n"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+
 
 
 def main():
