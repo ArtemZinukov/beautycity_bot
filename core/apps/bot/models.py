@@ -1,9 +1,10 @@
 from django.db import models
-from django.utils import timezone
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Client(models.Model):
     username = models.CharField(max_length=50, verbose_name='Имя клиента')
+    phone = PhoneNumberField(max_length=12, verbose_name='Номер телефона')
 
     def __str__(self):
         return self.username
@@ -32,6 +33,12 @@ class Master(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_services(self):
+        return ', '.join([str(item) for item in self.services.all()])
+
+    def get_salons(self):
+        return ', '.join([str(item) for item in self.salons.all()])
 
     class Meta:
         verbose_name = "Мастер"
