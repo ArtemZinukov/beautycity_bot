@@ -52,8 +52,15 @@ def handle_contact_admin(message):
 def handle_contact_admin(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     masters = Master.objects.all()
+
+    output = []
+
     for master in masters:
-        markup.add(master.name)
+        output.append(master.name)
+
+    markup.max_row_keys = 3
+    markup.row(*output)
+    
     markup.row('Вернуться на главную')
     message_text = 'Выберите мастера'
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
