@@ -2,6 +2,7 @@ from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup
 from environs import Env
 import os
+from .models import Master
 
 
 env = Env()
@@ -50,11 +51,25 @@ def handle_contact_admin(message):
 @bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
 def handle_contact_admin(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.row('Ольга', 'Людмила', 'Светлана')
-    markup.row('Ксения', 'Галина', 'Екатерина')
+    masters = Master.objects.all()
+    for master in masters:
+        markup.add(master.name)
     markup.row('Вернуться на главную')
     message_text = 'Выберите мастера'
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text in [master.name for master in Master.objects.all()])
+def choose_service(message):
+    master_name = message.text
+    master = Master.objects.get(name=master_name)
+    services = master.services.all()
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    for service in services:
+        markup.add(service.title)
+    markup.row('Назад', 'Вернуться на главную')
+    previous_messages[message.chat.id] = 'Выбрать мастера'
+    bot.send_message(message.chat.id, 'Выберите услугу:', reply_markup=markup)
 
 
 @bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
@@ -62,11 +77,11 @@ def send_back(message):
     handle_consent(message)
 
 
-# @bot.message_handler(func=lambda message: message.text == 'Назад')
-# def back_to_previous_message(message):
-#     previous_message = previous_messages.get(message.chat.id)
-#     if previous_message == "Правила пользования":
-#         handle_rules_message(message)
+@bot.message_handler(func=lambda message: message.text == 'Назад')
+def back_to_previous_message(message):
+    previous_message = previous_messages.get(message.chat.id)
+    if previous_message == "Выбрать мастера":
+        handle_contact_admin(message)
 
 
 def main():
