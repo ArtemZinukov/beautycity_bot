@@ -2,7 +2,8 @@ from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup
 from environs import Env
 import os
-from .models import Master
+import re
+from .models import Master, Client, Service
 
 
 env = Env()
@@ -17,6 +18,29 @@ def send_file(message, file_name):
     file_path = os.path.join(os.path.dirname(__file__), file_name)
     with open(file_path, 'rb') as file:
         bot.send_document(message.chat.id, file)
+
+
+def request_user_credentials(message):
+    ask_phone(message)
+    client, created = Client.objects.get_or_create(tg_id=message.from_user.id)
+    client.username = message.from_user.first_name
+    client.save()
+
+
+def ask_phone(message):
+    bot.send_message(message.chat.id, 'Введите ваш номер телефона: (Например: +78521503215)')
+    bot.register_next_step_handler(message, handle_phone)
+
+
+def handle_phone(message):
+    phone_pattern = r'^(\+7)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$'
+    if re.match(phone_pattern, message.text):
+        client = Client.objects.last()
+        client.phone_number = message.text
+        client.save()
+    else:
+        bot.send_message(message.chat.id, 'Некорректный формат номера телефона. Пожалуйста, введите снова:')
+        bot.register_next_step_handler(message, handle_phone)
 
 
 @bot.message_handler(commands=['start'])
@@ -79,6 +103,11 @@ def choose_service(message):
     markup.row('Назад', 'Вернуться на главную')
     previous_messages[message.chat.id] = 'Выбрать мастера'
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
+def get_user_data(message):
+    request_user_credentials(message)
 
 
 @bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')

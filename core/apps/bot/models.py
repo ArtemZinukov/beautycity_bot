@@ -3,8 +3,9 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Client(models.Model):
+    tg_id = models.IntegerField(unique=True, verbose_name='Телеграмм id клиента')
     username = models.CharField(max_length=50, verbose_name='Имя клиента')
-    phone = PhoneNumberField(max_length=12, verbose_name='Номер телефона')
+    phone_number = PhoneNumberField(max_length=12, verbose_name='Номер телефона')
 
     def __str__(self):
         return self.username
