@@ -3,8 +3,17 @@ from telebot.types import ReplyKeyboardMarkup
 from environs import Env
 import os
 import re
-from .models import Master, Client, Service
-from .models import Master, Salon, Service
+import datetime
+from .models import Master, Client, Service, Salon
+
+slots = ['10:00-11:00',
+         '11:00-12:00',
+         '12:00-13:00',
+         '13:00-14:00',
+         '14-00-15:00',
+         '15:00-16:00',
+         '16:00-17:00',
+         '17:00-18:00']
 
 
 env = Env()
@@ -124,6 +133,42 @@ def back_to_previous_message(message):
     previous_message = previous_messages.get(message.chat.id)
     if previous_message == "Выбрать мастера":
         handle_contact_admin(message)
+
+
+@bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
+def choose_salon(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    for salon in Salon.objects.all():
+        markup.row(salon.address)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите салон:"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text in [salon.address for salon in Salon.objects.all()])
+def choose_procedure(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    services = Service.objects.all()
+    for service in services:
+        markup.row(service.title)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите услугу:\n"
+    for service in services:
+        message_text += f"{service.title} - {service.price} рублей\n"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
+def coose_date(message):
+    today = datetime.date.today()
+    for day in range(1, 7):
+        date = today + datetime.timedelta(days=day)
+        markup.row(date)
+
+
+    tomorrow = today + datetime.timedelta(days=1)
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+
+
 
 
 def main():
