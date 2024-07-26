@@ -3,8 +3,9 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Client(models.Model):
+    tg_id = models.IntegerField(unique=True, verbose_name='Телеграмм id клиента')
     username = models.CharField(max_length=50, verbose_name='Имя клиента')
-    phone = PhoneNumberField(max_length=12, verbose_name='Номер телефона')
+    phone_number = PhoneNumberField(max_length=12, verbose_name='Номер телефона')
 
     def __str__(self):
         return self.username
@@ -61,7 +62,7 @@ class Registration(models.Model):
     master = models.ForeignKey(Master, verbose_name='Мастер', on_delete=models.CASCADE)
     client = models.ForeignKey(Client, verbose_name='Клиент', on_delete=models.CASCADE)
     service = models.ForeignKey(Service, verbose_name='Услуга', on_delete=models.CASCADE)
-    time_registration = models.DateTimeField(auto_now_add=False, verbose_name='Время регистрации')
+    time_registration = models.DateTimeField(auto_now_add=True, verbose_name='Время регистрации')
 
     def __str__(self):
         return f"Заказ №{self.pk}"

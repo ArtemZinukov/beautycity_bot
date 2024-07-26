@@ -5,9 +5,9 @@ from .models import Client, Salon, Service, Registration, Master
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ('username', 'phone')
-    search_fields = ('username', 'phone')
-    list_filter = ('username', 'phone')
+    list_display = ('tg_id', 'username', 'phone_number')
+    search_fields = ("tg_id", 'username', 'phone_number')
+    list_filter = ('username', 'phone_number')
 
 
 @admin.register(Master)
