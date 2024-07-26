@@ -5,7 +5,6 @@ import os
 import re
 from .models import Master, Client, Service
 
-
 env = Env()
 env.read_env()
 token = env.str("TG_BOT_TOKEN")
@@ -84,7 +83,7 @@ def handle_contact_admin(message):
 
     markup.max_row_keys = 3
     markup.row(*output)
-    
+
     markup.row('Вернуться на главную')
     message_text = 'Выберите мастера'
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
