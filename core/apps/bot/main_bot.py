@@ -158,17 +158,23 @@ def choose_procedure(message):
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
-def coose_date(message):
-    today = datetime.date.today()
-    for day in range(1, 7):
-        date = today + datetime.timedelta(days=day)
-        markup.row(date)
-
-
-    tomorrow = today + datetime.timedelta(days=1)
+def choose_date(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    today = datetime.date.today()
+    markup_output = []
+    for day in range(1, 8):
+        date = today + datetime.timedelta(days=day)
+        markup_output.append(date)
+    markup.max_row_keys = 3
+    markup.row(*markup_output)
+    markup.row("Назад","Вернуться на главную")
+    message_text = "Выберите дату:"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
+@bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 8)])
+def choose_slot(message):
+    pass
 
 
 def main():
