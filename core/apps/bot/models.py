@@ -67,7 +67,6 @@ class Registration(models.Model):
     slot = models.CharField(max_length=11, verbose_name='время записи', default='')
     reminder_sent = models.BooleanField(default=False, verbose_name='Отправилось напоминание')
 
-
     def __str__(self):
         return f"Заказ №{self.pk}"
 

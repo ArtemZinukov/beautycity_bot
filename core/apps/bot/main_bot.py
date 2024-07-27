@@ -6,15 +6,6 @@ import re
 import datetime
 from .models import Master, Client, Service, Salon, Registration
 
-slots = ['10:00-11:00',
-         '11:00-12:00',
-         '12:00-13:00',
-         '13:00-14:00',
-         '14-00-15:00',
-         '15:00-16:00']
-
-users_info = {}
-
 
 env = Env()
 env.read_env()
@@ -22,6 +13,10 @@ token = env.str("TG_BOT_TOKEN")
 bot = TeleBot(token)
 
 previous_messages = {}
+
+slots = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14-00-15:00', '15:00-16:00']
+
+users_info = {}
 
 
 def send_file(message, file_name):
@@ -164,6 +159,7 @@ def choose_procedure(message):
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, choose_date)
 
+
 @bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
 def choose_date(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -180,6 +176,7 @@ def choose_date(message):
     users_info[chat_id]['service'] = message.text
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, choose_slot)
+
 
 @bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def choose_slot(message):
