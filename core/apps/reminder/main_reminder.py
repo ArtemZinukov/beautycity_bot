@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, timezone
 
 import schedule
 import time
 from telebot import TeleBot
 
 from environs import Env
-
+import pytz
 from core.apps.bot.models import Registration
 
 
@@ -25,15 +25,15 @@ def check_bookings():
     bookings = Registration.objects.all()
     for booking in bookings:
         booking_time = booking.time_registration
-        current_time = datetime.now()
-        if current_time == datetime.combine(date.today(), booking_time.time()) + timedelta(minutes=10):
+        current_time = datetime.now(pytz.timezone("Europe/Moscow"))
+        if current_time >= (booking_time + timedelta(minutes=2)):
             if not booking.reminder_sent:
                 send_reminder(booking)
                 booking.reminder_sent = True
                 booking.save()
 
 
-schedule.every(1).minutes.do(check_bookings)
+schedule.every(10).seconds.do(check_bookings)
 
 
 def main():

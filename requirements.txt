@@ -5,3 +5,4 @@ pytelegrambotapi==4.20.0
 phonenumbers==8.13.40
 django-phonenumber-field==8.0.0
 schedule==1.2.2
+pytz==2024.1
