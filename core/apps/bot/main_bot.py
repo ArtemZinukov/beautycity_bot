@@ -181,13 +181,17 @@ def choose_date(message):
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, choose_slot)
 
+
 @bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def choose_slot(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id
     users_info[chat_id]['service_date'] = datetime.datetime.strptime(message.text, '%Y-%m-%d')
 
-    masters = Master.objects.filter(services__title=users_info[chat_id]['service'], salons__address=users_info[chat_id]['salon'])
+    masters = Master.objects.filter(services__title=users_info[chat_id]['service'],
+                                    salons__address=users_info[chat_id]['salon'])
+
+    markup_output = []
 
     for master in masters:
         records = Registration.objects.filter(master__name=master.name,
@@ -198,19 +202,37 @@ def choose_slot(message):
         for record in records:
             users_info[chat_id][master.name].remove(record.slot)
 
-        markup_output = []
         for slot in users_info[chat_id][master.name]:
-            markup_output.append(slot)
-        markup.max_row_keys = 3
-        markup.row(*markup_output)
+            if slot not in markup_output:
+                markup_output.append(slot)
+
+    markup.max_row_keys = 3
+    markup.row(*markup_output)
     markup.row("Вернуться на главную")
-    message_text = "Выберите время:\n"
-    for master in masters:
-        message_text += f'{master.name}:\n'
-        for slot in users_info[chat_id][master.name]:
-            message_text += f'         {slot}\n'
+    message_text = "Выберите время:"
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    bot.register_next_step_handler(message, choose_slot)
+    bot.register_next_step_handler(message, choose_master(masters=masters))
+
+
+@bot.message_handler(func=lambda message: message.text)
+def choose_master(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    chat_id = message.chat.id
+    users_info[chat_id]['slot'] = message.text
+    masters = Master.objects.filter(services__title=users_info[chat_id]['service'],
+                                    salons__address=users_info[chat_id]['salon'])
+    markup_output = []
+
+    for master in masters:
+        if message.text in users_info[chat_id][master.name]:
+            markup_output.append(master.name)
+
+    markup.max_row_keys = 3
+    markup.row(*markup_output)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите Мастера:"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+    bot.register_next_step_handler(message, request_user_credentials)
 
 
 def main():
