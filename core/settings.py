@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core.apps.bot',
     'core.apps.management',
+    'core.apps.reminder',
     'phonenumber_field',
 ]
 
