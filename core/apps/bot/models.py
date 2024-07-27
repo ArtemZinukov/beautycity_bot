@@ -63,7 +63,7 @@ class Registration(models.Model):
     client = models.ForeignKey(Client, verbose_name='Клиент', on_delete=models.CASCADE)
     service = models.ForeignKey(Service, verbose_name='Услуга', on_delete=models.CASCADE)
     time_registration = models.DateTimeField(auto_now_add=True, verbose_name='Время регистрации')
-    slot = models.CharField(max_length=11, verbose_name='время записи')
+    slot = models.CharField(max_length=11, verbose_name='время записи', default='p')
 
     def __str__(self):
         return f"Заказ №{self.pk}"

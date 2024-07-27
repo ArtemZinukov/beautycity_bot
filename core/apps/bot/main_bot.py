@@ -15,6 +15,8 @@ slots = ['10:00-11:00',
          '16:00-17:00',
          '17:00-18:00']
 
+users_info = {}
+
 
 env = Env()
 env.read_env()
@@ -138,6 +140,10 @@ def back_to_previous_message(message):
 @bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
 def choose_salon(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
+
+    chat_id = message.chat.id
+    users_info[chat_id] = {}
+
     for salon in Salon.objects.all():
         markup.row(salon.address)
     markup.row("Вернуться на главную")
@@ -155,6 +161,8 @@ def choose_procedure(message):
     message_text = "Выберите услугу:\n"
     for service in services:
         message_text += f"{service.title} - {service.price} рублей\n"
+    chat_id = message.chat.id
+    users_info[chat_id]['salon'] = message.text
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
@@ -169,15 +177,27 @@ def choose_date(message):
     markup.row(*markup_output)
     markup.row("Назад","Вернуться на главную")
     message_text = "Выберите дату:"
+    chat_id = message.chat.id
+    users_info[chat_id]['service'] = message.text
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
 @bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 8)])
 def choose_slot(message):
-    pass
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    chat_id = message.chat.id
+    users_info[chat_id]['slots'] = []
+    users_info[chat_id]['slots'] = slots
+
+    masters = Master.objects.filter(services__title=users_info[chat_id]['service'], salons__address=users_info[chat_id]['salon'])
+
+
+
+
 
 
 def main():
+
     bot.infinity_polling()
 
 
