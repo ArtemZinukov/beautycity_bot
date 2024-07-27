@@ -24,8 +24,8 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
-    list_display = ('client', 'master', 'salon', 'service', 'time_registration')
-    list_filter = ('salon', 'master', 'client', 'service')
+    list_display = ('client', 'master', 'salon', 'service', 'time_registration', 'reminder_sent')
+    list_filter = ('salon', 'master', 'client', 'service', 'reminder_sent')
     search_fields = ('salon__name', 'master__name', 'client__name', 'service__name')
     readonly_fields = ('time_registration',)
 
