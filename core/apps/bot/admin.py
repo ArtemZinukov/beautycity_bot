@@ -31,6 +31,3 @@ class RegistrationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Salon)
-
-
-
