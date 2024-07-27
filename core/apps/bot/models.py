@@ -63,6 +63,7 @@ class Registration(models.Model):
     client = models.ForeignKey(Client, verbose_name='Клиент', on_delete=models.CASCADE)
     service = models.ForeignKey(Service, verbose_name='Услуга', on_delete=models.CASCADE)
     time_registration = models.DateTimeField(auto_now_add=True, verbose_name='Время регистрации')
+    reminder_sent = models.BooleanField(default=False, verbose_name='Отправилось напоминание')
 
     def __str__(self):
         return f"Заказ №{self.pk}"
