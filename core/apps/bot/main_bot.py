@@ -115,11 +115,11 @@ def choose_service_after_salon(message):
     chat_id = message.chat.id
     users_info[chat_id]['salon'] = message.text
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    bot.register_next_step_handler(message, сhoose_date_after_service)
+    bot.register_next_step_handler(message, choose_date_after_service)
 
 
 @bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
-def сhoose_date_after_service(message):
+def choose_date_after_service(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     today = datetime.date.today()
     markup_output = []
@@ -170,7 +170,7 @@ def choose_time_after_service(message):
     bot.register_next_step_handler(message, select_wizard_after_time)
 
 
-@bot.message_handler(func=lambda message: message.text)
+@bot.message_handler(func=lambda message: message.text != 'Выбрать мастера')
 def select_wizard_after_time(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id
@@ -195,29 +195,38 @@ def select_wizard_after_time(message):
 
 #Вторая ветка
 @bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
-def choos_master(message):
+def running_script_master(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    masters = Master.objects.all()
 
-    output = []
+    chat_id = message.chat.id
+    users_info[chat_id] = {}
 
-    for master in masters:
-        output.append(master.name)
-
-    markup.max_row_keys = 3
-    markup.row(*output)
+    for master in Master.objects.all():
+        markup.row(master.name)
 
     markup.row('Вернуться на главную')
     message_text = 'Выберите мастера'
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
+    bot.register_next_step_handler(message, running_script_service_after_master)
 
+@bot.message_handler(func=lambda message: message.text in [master.name for master in Master.objects.all()])
+def running_script_service_after_master(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    chat_id = message.chat.id
+    users_info[chat_id]['master'] = message.text
+    master = Master.objects.get(name=message.text)
+    services = master.services.all()
 
-
-
-
-@bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
-def handle_contact_admin(message):
-    pass
+    output = []
+    for service in services:
+        output.append(service.title)
+    markup.max_row_keys = 3
+    markup.row(*output)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите услугу:\n"
+    for service in services:
+        message_text += f"{service.title} - {service.price} рублей\n"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
 #Прочее
