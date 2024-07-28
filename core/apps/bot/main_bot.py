@@ -40,6 +40,25 @@ def request_user_credentials(message):
     ask_phone(message)
 
 
+def request_user_credentials_2(message):
+    chat_id = message.chat.id
+    users_info[chat_id]['salon'] = message.text
+    client, created = Client.objects.get_or_create(tg_id=message.from_user.id)
+    client.username = message.from_user.first_name
+    client.save()
+    if 'master' in users_info[message.chat.id]:
+        registration = Registration(
+            client=client,
+            service=Service.objects.get(title=users_info[message.chat.id]['service']),
+            salon=Salon.objects.get(address=users_info[message.chat.id]['salon']),
+            service_date=users_info[message.chat.id]['service_date'],
+            master=Master.objects.get(name=users_info[message.chat.id]['master']),
+            slot=users_info[message.chat.id]['slot']
+        )
+        registration.save()
+    ask_phone(message)
+
+
 def ask_phone(message):
     bot.send_message(message.chat.id, 'Введите ваш номер телефона: (Например: +78521503215)')
     bot.register_next_step_handler(message, handle_phone)
@@ -269,7 +288,6 @@ def running_script_time_after_date_2(message):
                                    services__title=users_info[chat_id]['service'],)
     markup_output = []
 
-
     slots = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14-00-15:00', '15:00-16:00']
     records = Registration.objects.filter(master__name=master[0].name,
                                           service_date=message.text)
@@ -292,7 +310,7 @@ def running_script_time_after_date_2(message):
     bot.register_next_step_handler(message, running_script_salon_after_time)
 
 
-@bot.message_handler(func=lambda message: message.text) # ????
+@bot.message_handler(func=lambda message: message.text)  # ????
 def running_script_salon_after_time(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id
@@ -310,25 +328,6 @@ def running_script_salon_after_time(message):
     message_text = "Выберите салон:"
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, request_user_credentials_2)
-
-
-def request_user_credentials_2(message):
-    chat_id = message.chat.id
-    users_info[chat_id]['salon'] = message.text
-    client, created = Client.objects.get_or_create(tg_id=message.from_user.id)
-    client.username = message.from_user.first_name
-    client.save()
-    if 'master' in users_info[message.chat.id]:
-        registration = Registration(
-            client=client,
-            service=Service.objects.get(title=users_info[message.chat.id]['service']),
-            salon=Salon.objects.get(address=users_info[message.chat.id]['salon']),
-            service_date=users_info[message.chat.id]['service_date'],
-            master=Master.objects.get(name=users_info[message.chat.id]['master']),
-            slot=users_info[message.chat.id]['slot']
-        )
-        registration.save()
-    ask_phone(message)
 
 
 # Прочее
