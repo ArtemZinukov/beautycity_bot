@@ -318,20 +318,20 @@ def running_script_time_after_date_2(message):
         chat_id = message.chat.id
         users_info[chat_id]['service_date'] = datetime.datetime.strptime(message.text, '%Y-%m-%d')
 
-        master = Master.objects.filter(name=users_info[chat_id]['master'],
+        master = Master.objects.get(name=users_info[chat_id]['master'],
                                        services__title=users_info[chat_id]['service'],)
         markup_output = []
 
         slots = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14-00-15:00', '15:00-16:00']
-        records = Registration.objects.filter(master__name=master[0].name,
+        records = Registration.objects.filter(master__name=master.name,
                                               service_date=message.text)
 
-        users_info[chat_id][master[0].name] = slots
+        users_info[chat_id][master.name] = slots
 
         for record in records:
-            users_info[chat_id][master[0].name].remove(record.slot)
+            users_info[chat_id][master.name].remove(record.slot)
 
-        for slot in users_info[chat_id][master[0].name]:
+        for slot in users_info[chat_id][master.name]:
             if slot not in markup_output:
                 markup_output.append(slot)
 
