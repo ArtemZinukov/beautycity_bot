@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta, timezone
-
+from datetime import datetime, timedelta
 import schedule
 import time
 from telebot import TeleBot
