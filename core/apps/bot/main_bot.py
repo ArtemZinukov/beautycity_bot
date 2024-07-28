@@ -16,8 +16,6 @@ previous_messages = {}
 
 users_info = {}
 
-slots = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14-00-15:00', '15:00-16:00']
-
 
 def send_file(message, file_name):
     file_path = os.path.join(os.path.dirname(__file__), file_name)
@@ -134,6 +132,11 @@ def send_back(message):
     handle_consent(message)
 
 
+@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
+def choose_date_after_salon(message):
+    choose_date(message)
+
+
 @bot.message_handler(func=lambda message: message.text == 'Назад')
 def back_to_previous_message(message):
     previous_message = previous_messages.get(message.chat.id)
@@ -156,7 +159,7 @@ def choose_salon(message):
 
 
 @bot.message_handler(func=lambda message: message.text in [salon.address for salon in Salon.objects.all()])
-def choose_procedure(message):
+def Choose_service_after_salon(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     services = Service.objects.all()
     for service in services:
@@ -171,11 +174,6 @@ def choose_procedure(message):
     bot.register_next_step_handler(message, choose_date)
 
 
-@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
-def choose_date_after_salon(message):
-    choose_date(message)
-
-
 @bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def choose_slot(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -187,6 +185,7 @@ def choose_slot(message):
     markup_output = []
 
     for master in masters:
+        slots = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14-00-15:00', '15:00-16:00']
         records = Registration.objects.filter(master__name=master.name,
                                               salon__address=users_info[chat_id]['salon'],
                                               service_date=message.text)
@@ -200,6 +199,7 @@ def choose_slot(message):
             if slot not in markup_output:
                 markup_output.append(slot)
 
+    markup_output.sort()
     markup.max_row_keys = 3
     markup.row(*markup_output)
     markup.row("Вернуться на главную")
