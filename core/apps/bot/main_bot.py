@@ -26,10 +26,22 @@ def send_file(message, file_name):
 
 
 def request_user_credentials(message):
-    ask_phone(message)
+    chat_id = message.chat.id
+    users_info[chat_id]['master'] = message.text
     client, created = Client.objects.get_or_create(tg_id=message.from_user.id)
     client.username = message.from_user.first_name
     client.save()
+    if 'master' in users_info[message.chat.id]:
+        registration = Registration(
+            client=client,
+            service=Service.objects.get(title=users_info[message.chat.id]['service']),
+            salon=Salon.objects.get(address=users_info[message.chat.id]['salon']),
+            service_date=users_info[message.chat.id]['service_date'],
+            master=Master.objects.get(name=users_info[message.chat.id]['master']),
+            slot=users_info[message.chat.id]['slot']
+        )
+        registration.save()
+    ask_phone(message)
 
 
 def ask_phone(message):
@@ -46,6 +58,23 @@ def handle_phone(message):
     else:
         bot.send_message(message.chat.id, 'Некорректный формат номера телефона. Пожалуйста, введите снова:')
         bot.register_next_step_handler(message, handle_phone)
+
+
+def choose_date(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    today = datetime.date.today()
+    markup_output = []
+    for day in range(1, 7):
+        date = str(today + datetime.timedelta(days=day))
+        markup_output.append(date)
+    markup.max_row_keys = 3
+    markup.row(*markup_output)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите дату:"
+    chat_id = message.chat.id
+    users_info[chat_id]['service'] = message.text
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+    bot.register_next_step_handler(message, choose_slot)
 
 
 @bot.message_handler(commands=['start'])
@@ -97,25 +126,7 @@ def handle_contact_admin(message):
 
 @bot.message_handler(func=lambda message: message.text in [master.name for master in Master.objects.all()])
 def choose_service(message):
-    master_name = message.text
-    master = Master.objects.get(name=master_name)
-    services = master.services.all()
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    message_text = "Выберите услугу:\n"
-    markup_output = []
-    for service in services:
-        message_text += f"{service.title} - {service.price} рублей\n"
-        markup_output.append(service.title)
-    markup.max_row_keys = 2
-    markup.row(*markup_output)
-    markup.row('Назад', 'Вернуться на главную')
-    previous_messages[message.chat.id] = 'Выбрать мастера'
-    bot.send_message(message.chat.id, message_text, reply_markup=markup)
-
-
-@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
-def get_user_data(message):
-    request_user_credentials(message)
+    choose_salon(message)
 
 
 @bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
@@ -161,21 +172,8 @@ def choose_procedure(message):
 
 
 @bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
-def choose_date(message):
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    today = datetime.date.today()
-    markup_output = []
-    for day in range(1, 7):
-        date = str(today + datetime.timedelta(days=day))
-        markup_output.append(date)
-    markup.max_row_keys = 3
-    markup.row(*markup_output)
-    markup.row("Вернуться на главную")
-    message_text = "Выберите дату:"
-    chat_id = message.chat.id
-    users_info[chat_id]['service'] = message.text
-    bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    bot.register_next_step_handler(message, choose_slot)
+def choose_date_after_salon(message):
+    choose_date(message)
 
 
 @bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
@@ -184,28 +182,28 @@ def choose_slot(message):
     chat_id = message.chat.id
     users_info[chat_id]['service_date'] = datetime.datetime.strptime(message.text, '%Y-%m-%d')
 
-    masters = Master.objects.filter(services__title=users_info[chat_id]['service'], salons__address=users_info[chat_id]['salon'])
+    masters = Master.objects.filter(services__title=users_info[chat_id]['service'],
+                                    salons__address=users_info[chat_id]['salon'])
+    markup_output = []
 
     for master in masters:
         records = Registration.objects.filter(master__name=master.name,
                                               salon__address=users_info[chat_id]['salon'],
                                               service_date=message.text)
-        users_info[chat_id][master.name] = []
+
         users_info[chat_id][master.name] = slots
+
         for record in records:
             users_info[chat_id][master.name].remove(record.slot)
 
-        markup_output = []
         for slot in users_info[chat_id][master.name]:
-            markup_output.append(slot)
-        markup.max_row_keys = 3
-        markup.row(*markup_output)
+            if slot not in markup_output:
+                markup_output.append(slot)
+
+    markup.max_row_keys = 3
+    markup.row(*markup_output)
     markup.row("Вернуться на главную")
-    message_text = "Выберите время:\n"
-    for master in masters:
-        message_text += f'{master.name}:\n'
-        for slot in users_info[chat_id][master.name]:
-            message_text += f'         {slot}\n'
+    message_text = "Выберите время:"
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, choose_master)
 
@@ -221,8 +219,9 @@ def choose_master(message):
     markup_output = []
 
     for master in masters:
-        if message.text in users_info[chat_id][master.name]:
-            markup_output.append(master.name)
+        if master.name in users_info[chat_id]:
+            if message.text in users_info[chat_id][master.name]:
+                markup_output.append(master.name)
 
     markup.max_row_keys = 3
     markup.row(*markup_output)
