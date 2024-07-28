@@ -140,8 +140,11 @@ def running_script_service_after_salon(message):
     else:
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         services = Service.objects.all()
+        markup_output = []
         for service in services:
-            markup.row(service.title)
+            markup_output.append(service.title)
+        markup.max_row_keys = 3
+        markup.row(*markup_output)
         markup.row("Вернуться на главную")
         message_text = "Выберите услугу:\n"
         for service in services:
