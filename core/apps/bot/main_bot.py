@@ -159,7 +159,7 @@ def choose_salon(message):
 
 
 @bot.message_handler(func=lambda message: message.text in [salon.address for salon in Salon.objects.all()])
-def Choose_service_after_salon(message):
+def choose_service_after_salon(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     services = Service.objects.all()
     for service in services:
@@ -171,11 +171,11 @@ def Choose_service_after_salon(message):
     chat_id = message.chat.id
     users_info[chat_id]['salon'] = message.text
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    bot.register_next_step_handler(message, choose_date)
+    bot.register_next_step_handler(message, choose_time_after_service)
 
 
 @bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
-def choose_slot(message):
+def choose_time_after_service(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id
     users_info[chat_id]['service_date'] = datetime.datetime.strptime(message.text, '%Y-%m-%d')
@@ -205,11 +205,11 @@ def choose_slot(message):
     markup.row("Вернуться на главную")
     message_text = "Выберите время:"
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    bot.register_next_step_handler(message, choose_master)
+    bot.register_next_step_handler(message, select_wizard_after_time)
 
 
 @bot.message_handler(func=lambda message: message.text)
-def choose_master(message):
+def select_wizard_after_time(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id
     users_info[chat_id]['slot'] = message.text
