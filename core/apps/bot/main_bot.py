@@ -159,6 +159,7 @@ def choose_procedure(message):
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, choose_date)
 
+
 @bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
 def choose_date(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -175,6 +176,7 @@ def choose_date(message):
     users_info[chat_id]['service'] = message.text
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, choose_slot)
+
 
 @bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def choose_slot(message):
@@ -205,7 +207,29 @@ def choose_slot(message):
         for slot in users_info[chat_id][master.name]:
             message_text += f'         {slot}\n'
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    bot.register_next_step_handler(message, choose_slot)
+    bot.register_next_step_handler(message, choose_master)
+
+
+@bot.message_handler(func=lambda message: message.text)
+def choose_master(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    chat_id = message.chat.id
+    users_info[chat_id]['slot'] = message.text
+
+    masters = Master.objects.filter(services__title=users_info[chat_id]['service'],
+                                    salons__address=users_info[chat_id]['salon'])
+    markup_output = []
+
+    for master in masters:
+        if message.text in users_info[chat_id][master.name]:
+            markup_output.append(master.name)
+
+    markup.max_row_keys = 3
+    markup.row(*markup_output)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите Мастера:"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+    bot.register_next_step_handler(message, request_user_credentials)
 
 
 def main():
