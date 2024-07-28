@@ -13,7 +13,6 @@ token = env.str("TG_BOT_TOKEN")
 bot = TeleBot(token)
 
 previous_messages = {}
-
 users_info = {}
 
 
@@ -58,23 +57,6 @@ def handle_phone(message):
         bot.register_next_step_handler(message, handle_phone)
 
 
-def choose_date(message):
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    today = datetime.date.today()
-    markup_output = []
-    for day in range(1, 7):
-        date = str(today + datetime.timedelta(days=day))
-        markup_output.append(date)
-    markup.max_row_keys = 3
-    markup.row(*markup_output)
-    markup.row("Вернуться на главную")
-    message_text = "Выберите дату:"
-    chat_id = message.chat.id
-    users_info[chat_id]['service'] = message.text
-    bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    bot.register_next_step_handler(message, choose_slot)
-
-
 @bot.message_handler(commands=['start'])
 def get_personal_data_consent(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -104,46 +86,7 @@ def handle_contact_admin(message):
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
-@bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
-def handle_contact_admin(message):
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    masters = Master.objects.all()
-
-    output = []
-
-    for master in masters:
-        output.append(master.name)
-
-    markup.max_row_keys = 3
-    markup.row(*output)
-
-    markup.row('Вернуться на главную')
-    message_text = 'Выберите мастера'
-    bot.send_message(message.chat.id, message_text, reply_markup=markup)
-
-
-@bot.message_handler(func=lambda message: message.text in [master.name for master in Master.objects.all()])
-def choose_service(message):
-    choose_salon(message)
-
-
-@bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
-def send_back(message):
-    handle_consent(message)
-
-
-@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
-def choose_date_after_salon(message):
-    choose_date(message)
-
-
-@bot.message_handler(func=lambda message: message.text == 'Назад')
-def back_to_previous_message(message):
-    previous_message = previous_messages.get(message.chat.id)
-    if previous_message == "Выбрать мастера":
-        handle_contact_admin(message)
-
-
+#Первая ветка
 @bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
 def choose_salon(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -170,6 +113,24 @@ def choose_service_after_salon(message):
         message_text += f"{service.title} - {service.price} рублей\n"
     chat_id = message.chat.id
     users_info[chat_id]['salon'] = message.text
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+    bot.register_next_step_handler(message, сhoose_date_after_service)
+
+
+@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
+def сhoose_date_after_service(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    today = datetime.date.today()
+    markup_output = []
+    for day in range(1, 7):
+        date = str(today + datetime.timedelta(days=day))
+        markup_output.append(date)
+    markup.max_row_keys = 3
+    markup.row(*markup_output)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите дату:"
+    chat_id = message.chat.id
+    users_info[chat_id]['service'] = message.text
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, choose_time_after_service)
 
@@ -229,6 +190,46 @@ def select_wizard_after_time(message):
     message_text = "Выберите Мастера:"
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
     bot.register_next_step_handler(message, request_user_credentials)
+
+
+#Вторая ветка
+@bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
+def choos_master(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    masters = Master.objects.all()
+
+    output = []
+
+    for master in masters:
+        output.append(master.name)
+
+    markup.max_row_keys = 3
+    markup.row(*output)
+
+    markup.row('Вернуться на главную')
+    message_text = 'Выберите мастера'
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+
+
+
+
+
+@bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
+def handle_contact_admin(message):
+    pass
+
+
+#Прочее
+@bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
+def send_back(message):
+    handle_consent(message)
+
+
+@bot.message_handler(func=lambda message: message.text == 'Назад')
+def back_to_previous_message(message):
+    previous_message = previous_messages.get(message.chat.id)
+    if previous_message == "Выбрать мастера":
+        handle_contact_admin(message)
 
 
 def main():
