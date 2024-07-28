@@ -55,6 +55,7 @@ def handle_phone(message):
         client = Client.objects.last()
         client.phone_number = message.text
         client.save()
+        bot.send_message(message.chat.id, 'Ваш заказ успешно зарегистрирован!')
     else:
         bot.send_message(message.chat.id, 'Некорректный формат номера телефона. Пожалуйста, введите снова:')
         bot.register_next_step_handler(message, handle_phone)
