@@ -310,6 +310,7 @@ def running_script_time_after_date_2(message):
     bot.register_next_step_handler(message, running_script_salon_after_time)
 
 
+@bot.message_handler(func=lambda message: message.text)  # ????
 def running_script_salon_after_time(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id

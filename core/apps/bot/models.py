@@ -29,7 +29,7 @@ class Service(models.Model):
 
 class Master(models.Model):
     name = models.CharField(max_length=50, verbose_name='Имя мастера')
-    services = models.ManyToManyField(Service, verbose_name='Услуга', related_name='master_services')
+    services = models.ManyToManyField("Service", verbose_name='Услуга')
     salons = models.ManyToManyField("Salon", verbose_name='Салон')
 
     def __str__(self):
