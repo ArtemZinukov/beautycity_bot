@@ -6,7 +6,6 @@ import re
 import datetime
 from .models import Master, Client, Service, Salon, Registration
 
-
 env = Env()
 env.read_env()
 token = env.str("TG_BOT_TOKEN")
@@ -25,6 +24,25 @@ def send_file(message, file_name):
 def request_user_credentials(message):
     chat_id = message.chat.id
     users_info[chat_id]['master'] = message.text
+    client, created = Client.objects.get_or_create(tg_id=message.from_user.id)
+    client.username = message.from_user.first_name
+    client.save()
+    if 'master' in users_info[message.chat.id]:
+        registration = Registration(
+            client=client,
+            service=Service.objects.get(title=users_info[message.chat.id]['service']),
+            salon=Salon.objects.get(address=users_info[message.chat.id]['salon']),
+            service_date=users_info[message.chat.id]['service_date'],
+            master=Master.objects.get(name=users_info[message.chat.id]['master']),
+            slot=users_info[message.chat.id]['slot']
+        )
+        registration.save()
+    ask_phone(message)
+
+
+def request_user_credentials_2(message):
+    chat_id = message.chat.id
+    users_info[chat_id]['salon'] = message.text
     client, created = Client.objects.get_or_create(tg_id=message.from_user.id)
     client.username = message.from_user.first_name
     client.save()
@@ -87,7 +105,7 @@ def handle_contact_admin(message):
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
 
 
-#Первая ветка
+# Первая ветка ################################################################################
 @bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
 def running_script_salon(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -137,7 +155,8 @@ def running_script_date_after_service(message):
     bot.register_next_step_handler(message, running_script_time_after_date)
 
 
-@bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
+@bot.message_handler(
+    func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def running_script_time_after_date(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id
@@ -194,7 +213,7 @@ def running_script_master_after_time(message):
     bot.register_next_step_handler(message, request_user_credentials)
 
 
-#Вторая ветка
+# Вторая ветка #################################################################################
 @bot.message_handler(func=lambda message: message.text == 'Выбрать мастера')
 def running_script_master(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -221,7 +240,7 @@ def running_script_service_after_master(message):
 
     chat_id = message.chat.id
     users_info[chat_id]['master'] = message.text
-    
+
     master = Master.objects.get(name=message.text)
     services = master.services.all()
 
@@ -258,30 +277,29 @@ def running_script_date_after_service_2(message):
     bot.register_next_step_handler(message, running_script_time_after_date_2)
 
 
-@bot.message_handler(func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
+@bot.message_handler(
+    func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def running_script_time_after_date_2(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     chat_id = message.chat.id
     users_info[chat_id]['service_date'] = datetime.datetime.strptime(message.text, '%Y-%m-%d')
 
-    masters = Master.objects.filter(services__title=users_info[chat_id]['service'],
-                                    salons__address=users_info[chat_id]['salon'])
+    master = Master.objects.filter(name=users_info[chat_id]['master'],
+                                   services__title=users_info[chat_id]['service'],)
     markup_output = []
 
-    for master in masters:
-        slots = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14-00-15:00', '15:00-16:00']
-        records = Registration.objects.filter(master__name=master.name,
-                                              salon__address=users_info[chat_id]['salon'],
-                                              service_date=message.text)
+    slots = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14-00-15:00', '15:00-16:00']
+    records = Registration.objects.filter(master__name=master[0].name,
+                                          service_date=message.text)
 
-        users_info[chat_id][master.name] = slots
+    users_info[chat_id][master[0].name] = slots
 
-        for record in records:
-            users_info[chat_id][master.name].remove(record.slot)
+    for record in records:
+        users_info[chat_id][master[0].name].remove(record.slot)
 
-        for slot in users_info[chat_id][master.name]:
-            if slot not in markup_output:
-                markup_output.append(slot)
+    for slot in users_info[chat_id][master[0].name]:
+        if slot not in markup_output:
+            markup_output.append(slot)
 
     markup_output.sort()
     markup.max_row_keys = 3
@@ -292,22 +310,27 @@ def running_script_time_after_date_2(message):
     bot.register_next_step_handler(message, running_script_salon_after_time)
 
 
-@bot.message_handler(func=lambda message: message.text)
+@bot.message_handler(func=lambda message: message.text)  # ????
 def running_script_salon_after_time(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
-
     chat_id = message.chat.id
-    users_info[chat_id] = {}
+    users_info[chat_id]['slot'] = message.text
 
-    for salon in Salon.objects.all():
+    master = Master.objects.get(name=users_info[chat_id]['master'])
+    salons = master.salons.all()
+
+    output = []
+    for salon in salons:
         markup.row(salon.address)
+    markup.max_row_keys = 3
+    markup.row(*output)
     markup.row("Вернуться на главную")
     message_text = "Выберите салон:"
     bot.send_message(message.chat.id, message_text, reply_markup=markup)
-    #bot.register_next_step_handler(message,)
+    bot.register_next_step_handler(message, request_user_credentials_2)
 
 
-#Прочее
+# Прочее
 @bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
 def send_back(message):
     handle_consent(message)
@@ -321,7 +344,6 @@ def back_to_previous_message(message):
 
 
 def main():
-
     bot.infinity_polling()
 
 
