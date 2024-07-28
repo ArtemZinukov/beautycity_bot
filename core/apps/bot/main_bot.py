@@ -206,7 +206,10 @@ def running_script_time_after_date(message):
         markup.max_row_keys = 3
         markup.row(*markup_output)
         markup.row("Вернуться на главную")
-        message_text = "Выберите время:"
+        if markup_output:
+            message_text = "Выберите время:"
+        else:
+            message_text = "На этот день записи нет"
         bot.send_message(message.chat.id, message_text, reply_markup=markup)
         bot.register_next_step_handler(message, running_script_master_after_time)
 
