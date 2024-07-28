@@ -120,17 +120,17 @@ def handle_contact_admin(message):
 # Первая ветка ################################################################################
 @bot.message_handler(func=lambda message: message.text == 'Выбрать салон')
 def running_script_salon(message):
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
 
-        chat_id = message.chat.id
-        users_info[chat_id] = {}
+    chat_id = message.chat.id
+    users_info[chat_id] = {}
 
-        for salon in Salon.objects.all():
-            markup.row(salon.address)
-        markup.row("Вернуться на главную")
-        message_text = "Выберите салон:"
-        bot.send_message(message.chat.id, message_text, reply_markup=markup)
-        bot.register_next_step_handler(message, running_script_service_after_salon)
+    for salon in Salon.objects.all():
+        markup.row(salon.address)
+    markup.row("Вернуться на главную")
+    message_text = "Выберите салон:"
+    bot.send_message(message.chat.id, message_text, reply_markup=markup)
+    bot.register_next_step_handler(message, running_script_service_after_salon)
 
 
 @bot.message_handler(func=lambda message: message.text in [salon.address for salon in Salon.objects.all()])
