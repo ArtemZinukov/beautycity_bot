@@ -83,6 +83,7 @@ def handle_phone(message):
             client.phone_number = message.text
             client.save()
             bot.send_message(message.chat.id, 'Ваш заказ успешно зарегистрирован!')
+            handle_consent(message)
         else:
             bot.send_message(message.chat.id, 'Некорректный формат номера телефона. Пожалуйста, введите снова:')
             bot.register_next_step_handler(message, handle_phone)
@@ -133,7 +134,6 @@ def running_script_salon(message):
     bot.register_next_step_handler(message, running_script_service_after_salon)
 
 
-@bot.message_handler(func=lambda message: message.text in [salon.address for salon in Salon.objects.all()])
 def running_script_service_after_salon(message):
     if message.text == 'Вернуться на главную':
         handle_consent(message)
@@ -155,7 +155,6 @@ def running_script_service_after_salon(message):
         bot.register_next_step_handler(message, running_script_date_after_service)
 
 
-@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
 def running_script_date_after_service(message):
     if message.text == 'Вернуться на главную':
         handle_consent(message)
@@ -176,8 +175,6 @@ def running_script_date_after_service(message):
         bot.register_next_step_handler(message, running_script_time_after_date)
 
 
-@bot.message_handler(
-    func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def running_script_time_after_date(message):
     if message.text == 'Вернуться на главную':
         handle_consent(message)
@@ -263,7 +260,6 @@ def running_script_master(message):
     bot.register_next_step_handler(message, running_script_service_after_master)
 
 
-@bot.message_handler(func=lambda message: message.text in [master.name for master in Master.objects.all()])
 def running_script_service_after_master(message):
     try:
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -293,7 +289,6 @@ def running_script_service_after_master(message):
         handle_consent(message)
 
 
-@bot.message_handler(func=lambda message: message.text in [service.title for service in Service.objects.all()])
 def running_script_date_after_service_2(message):
     if message.text == 'Вернуться на главную':
         handle_consent(message)
@@ -314,8 +309,6 @@ def running_script_date_after_service_2(message):
         bot.register_next_step_handler(message, running_script_time_after_date_2)
 
 
-@bot.message_handler(
-    func=lambda message: message.text in [datetime.date.today() + datetime.timedelta(days=day) for day in range(1, 7)])
 def running_script_time_after_date_2(message):
     if message.text == 'Вернуться на главную':
         handle_consent(message)
@@ -379,13 +372,6 @@ def running_script_salon_after_time(message):
 @bot.message_handler(func=lambda message: message.text == 'Вернуться на главную')
 def send_back(message):
     handle_consent(message)
-
-
-@bot.message_handler(func=lambda message: message.text == 'Назад')
-def back_to_previous_message(message):
-    previous_message = previous_messages.get(message.chat.id)
-    if previous_message == "Выбрать мастера":
-        handle_contact_admin(message)
 
 
 def main():
